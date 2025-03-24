@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     const appTitle = 'Form Validation Demo';
@@ -17,6 +17,9 @@ class MyApp extends StatelessWidget {
         ),
         body: const MyCustomForm(),
       ),
+      routes: {
+        '/confirmation': (context) => const ConfirmationScreen(),
+      },
     );
   }
 }
@@ -44,16 +47,73 @@ class MyCustomFormState extends State<MyCustomForm> {
   @override
   Widget build(BuildContext context) {
     // Build a Form widget using the _formKey created above.
+    TextEditingController dateController = TextEditingController();
+
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextFormField(
-            // The validator receives the text that the user has entered.
+            decoration: const InputDecoration(labelText: 'Name'),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter some text';
+                return 'Enter your First and Last Name';
+              }
+              return null;
+            },
+          ),
+          TextFormField(
+            decoration: const InputDecoration(labelText: 'Email'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Enter your email';
+              }
+              final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+              if (!emailRegex.hasMatch(value)) {
+                return 'Enter a valid email address';
+              }
+              return null;
+            },
+          ),
+          TextFormField(
+            controller: dateController,
+            decoration: const InputDecoration(labelText: 'Date of Birth'),
+            onTap: ()async{ 
+              DateTime? date = DateTime(1900);
+
+              date = await showDatePicker(
+                context: context,
+                initialDate:DateTime.now(),
+                firstDate:DateTime(1900),
+                lastDate: DateTime(2100),
+              ).then((selectedDate) {
+                if (selectedDate != null) {
+                  dateController.text = DateFormat('MM-dd-yyy').format(selectedDate);
+                }
+                return selectedDate ?? DateTime.now();
+              });   
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Enter your date of birth';
+              }
+              return null;
+            },
+          ),
+          TextFormField(
+            decoration: const InputDecoration(labelText: 'Password'),
+            obscureText: true,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Enter your password';
+              }
+              if (value.length < 8) {
+                return 'Password must be at least 8 characters';
+              }
+              final passwordRegex = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$');
+              if (!passwordRegex.hasMatch(value)) {
+                return 'Password must contain at least one letter and one number';
               }
               return null;
             },
@@ -62,12 +122,11 @@ class MyCustomFormState extends State<MyCustomForm> {
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: ElevatedButton(
               onPressed: () {
-                // Validate returns true if the form is valid, or false otherwise.
                 if (_formKey.currentState!.validate()) {
-                  // If the form is valid, display a snackbar. In the real world,
-                  // you'd often call a server or save the information in a database.
+                  Navigator.pushNamed(context, '/confirmation');
+                } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Processing Data')),
+                    const SnackBar(content: Text('Correct the errors in the form')),
                   );
                 }
               },
@@ -75,6 +134,26 @@ class MyCustomFormState extends State<MyCustomForm> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+class ConfirmationScreen extends StatelessWidget {
+  const ConfirmationScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Confirmation'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Text('Signup is Successful!'),
+          ],
+        ),
       ),
     );
   }
